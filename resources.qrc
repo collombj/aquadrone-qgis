@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/SIREN">
+        <file>icon.png</file>
+    </qresource>
+</RCC>
