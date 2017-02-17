@@ -29,6 +29,8 @@ from Core import Core
 from SIREN_dockwidget import SIRENDockWidget
 import os.path
 
+from test.ErrorWindow import ErrorWindow
+
 
 class SIREN:
     def __init__(self, iface):
@@ -185,6 +187,8 @@ class SIREN:
         """
         # Get the current database selection (in the UI selector)
         selected = self.dockwidget.databaseSelector.currentText()
+        if selected == "":
+            ErrorWindow("Erreur selection base de donnees", "Veillez selectionner une base de données avant de valider")
 
         # Construct the @Core class (Main Class)
         # The Class need the global information of the database
@@ -198,6 +202,10 @@ class SIREN:
             self.iface
         )
 
+        if not self.dockwidget.checkBoxCorrected.isChecked():
+            if not self.dockwidget.checkBoxDifference.isChecked():
+                if not self.dockwidget.checkBoxBrut.isChecked():
+                    ErrorWindow("Erreur selection couche","Veillez selectionner une couche avant de continuer")
 
         # If the 'Corrected Position' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxCorrected.isChecked():
@@ -227,3 +235,4 @@ class SIREN:
         else:
             self.is_brut_displayed = False
             self.core.remove_brut_layer()
+
