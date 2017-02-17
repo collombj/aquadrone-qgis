@@ -28,7 +28,7 @@ class Core:
 
         # Notification key to detect change in DB
         # (see: https://www.postgresql.org/docs/9.1/static/sql-notify.html)
-        self.notify_key = 'aquadrone_notify_key'
+        self.notify_key = 'siren_key'
 
         # URI of the database. This information is required for the database connection in Layers
         self.uri = QgsDataSourceURI()
