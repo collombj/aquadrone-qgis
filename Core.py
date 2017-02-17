@@ -8,6 +8,7 @@ from qgis._core import QgsMapLayerRegistry
 from qgis._core import QgsVectorLayer
 
 from ListenerWorker import ListenerWorker
+from test.ErrorWindow import ErrorWindow
 
 
 class Core:
@@ -31,6 +32,18 @@ class Core:
 
         # URI of the database. This information is required for the database connection in Layers
         self.uri = QgsDataSourceURI()
+
+        if host == None:
+            ErrorWindow("Erreur hote", "Veuillez indiquer l'hote dans les parametres de connexion")
+        if port == None:
+            ErrorWindow("Erreur port", "Veuillez indiquer le port dans les parametres de connexion")
+        if username == None:
+            ErrorWindow("Erreur username", "Veuillez indiquer le nom d'utilisation dans les parametres de connexion")
+        if password == None:
+            ErrorWindow("Erreur password", "Veuillez indiquer le mot de passe dans les parametres de connexion")
+        if database == None:
+            ErrorWindow("Erreur database", "Veuillez indiquer la base de donnees dans les parametres de connexion")
+
         # Set information for the layer URI
         self.uri.setConnection(host, port, database, username, password)
 
