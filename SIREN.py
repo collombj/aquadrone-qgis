@@ -42,6 +42,12 @@ class SIREN:
         # Edit part for the plugin (Init the classes members)
         self.database_connection = None  # Database list (will be initialized in @SIREN::init_database_selector()
         self.core = None  # Main class to manipulate Layers and Notifications
+
+        # To ensure layers are not displayed more than once
+        self.is_brut_displayed = False
+        self.is_corrected_displayed = False
+        self.is_difference_displayed = False
+
         # End of Edit part
 
         self.iface = iface
@@ -192,14 +198,32 @@ class SIREN:
             self.iface
         )
 
+
         # If the 'Corrected Position' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxCorrected.isChecked():
-            self.core.corrected_layer()
+            if not self.is_corrected_displayed :
+                self.is_corrected_displayed = True
+                self.core.corrected_layer()
+        else:
+            self.is_corrected_displayed = False
+            self.core.remove_corrected_layer()
+
 
         # If the 'Difference Area' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxDifference.isChecked():
-            self.core.difference_layer()
+            if not self.is_difference_displayed :
+                self.is_difference_displayed = True
+                self.core.difference_layer()
+        else:
+            self.is_difference_displayed = False
+            self.core.remove_difference_layer()
+
 
         # If the 'Brut Position' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxBrut.isChecked():
-            self.core.brut_layer()
+            if not self.is_brut_displayed:
+                self.is_brut_displayed = True
+                self.core.brut_layer()
+        else:
+            self.is_brut_displayed = False
+            self.core.remove_brut_layer()

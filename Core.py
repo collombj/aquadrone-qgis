@@ -64,7 +64,8 @@ class Core:
         curs.execute('LISTEN ' + self.notify_key + ';')
         # Close the cursor to free memory
         curs.close()
-        print 'Waiting for notifications on channel ' + self.notify_key
+        print
+        'Waiting for notifications on channel ' + self.notify_key
 
         # Move the ListenerWorker to the thread (to avoid execution into the UI thread)
         self.worker.moveToThread(self.thread)
@@ -104,7 +105,7 @@ class Core:
         :param layer_name: The Column name to display.
         """
         # Specify the view and the column to use for the layer
-        self.uri.setDataSource('public', 'measures_formated', layer_name)
+        self.uri.setDataSource('public', 'measure_formated', layer_name)
         # Specify the primary key of the entries. For the record, the only unique column is measure_id
         self.uri.setKeyColumn('measure_id')
 
@@ -113,14 +114,47 @@ class Core:
         layer = QgsVectorLayer(self.uri.uri(), layer_name, 'postgres')
         # Check if the Layer is valid or not (in case of the column/table/... does not exist
         if not layer.isValid():
-            print 'Layer [' + layer_name + '] failed to load!'
+            print
+            'Layer [' + layer_name + '] failed to load!'
             return
 
         # Save the layer into the layer list (reminder: the layer list is useful to refresh all layers when
         # a notification is received)
         self.layer.append(layer)
+
         # Add the created layer to the QGIS project
         QgsMapLayerRegistry.instance().addMapLayer(layer)
+
+    def remove_corrected_layer(self):
+        """
+        Remove the layer of corrected positions
+        :return:
+        """
+        self.remove_layer('location_corrected')
+
+    def remove_difference_layer(self):
+        """
+        Remove the difference layer
+        :return:
+        """
+        self.remove_layer('location_difference')
+
+    def remove_brut_layer(self):
+        """
+        Remove the layer of raw positions
+        :return:
+        """
+        self.remove_layer('location_brut')
+
+    def remove_layer(self, layer_name):
+        """
+        Remove a layer from the canvas and the legend, if it exists
+        :param layer_name:
+        :return:
+        """
+        for layer in QgsMapLayerRegistry.instance().mapLayers():
+            if layer.find(layer_name) != -1:
+                QgsMapLayerRegistry.instance().removeMapLayer(layer)
 
     def stop(self):
         """
@@ -147,7 +181,8 @@ class Core:
         if code != 0:
             return
 
-        print 'Refresh in progress...'
+        print
+        'Refresh in progress...'
 
         for layer in self.layer:
             # refresh the layer
