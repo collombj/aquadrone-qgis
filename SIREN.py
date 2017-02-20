@@ -20,16 +20,15 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon
-# noinspection PyUnresolvedReferences
-import resources
-
-from Core import Core
-from SIREN_dockwidget import SIRENDockWidget
 import os.path
 
-from test.ErrorWindow import ErrorWindow
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from PyQt4.QtGui import QAction, QIcon
+
+import resources
+from Core import Core
+from ErrorWindow import ErrorWindow
+from SIREN_dockwidget import SIRENDockWidget
 
 
 class SIREN:
@@ -188,7 +187,8 @@ class SIREN:
         # Get the current database selection (in the UI selector)
         selected = self.dockwidget.databaseSelector.currentText()
         if selected == "":
-            ErrorWindow("Erreur selection base de donnees", "Veillez selectionner une base de données avant de valider")
+            ErrorWindow("Erreur selection base de donnees", "Veillez selectionner une base de donnees avant de valider", "information")
+            return
 
         # Construct the @Core class (Main Class)
         # The Class need the global information of the database
@@ -205,7 +205,8 @@ class SIREN:
         if not self.dockwidget.checkBoxCorrected.isChecked():
             if not self.dockwidget.checkBoxDifference.isChecked():
                 if not self.dockwidget.checkBoxBrut.isChecked():
-                    ErrorWindow("Erreur selection couche","Veillez selectionner une couche avant de continuer")
+                    ErrorWindow("Erreur selection couche","Veillez selectionner une couche avant de continuer", "critical")
+                    return
 
         # If the 'Corrected Position' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxCorrected.isChecked():
