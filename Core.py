@@ -7,8 +7,8 @@ from qgis._core import QgsDataSourceURI
 from qgis._core import QgsMapLayerRegistry
 from qgis._core import QgsVectorLayer
 
+from ErrorWindow import ErrorWindow
 from ListenerWorker import ListenerWorker
-from test.ErrorWindow import ErrorWindow
 
 
 class Core:
@@ -34,15 +34,20 @@ class Core:
         self.uri = QgsDataSourceURI()
 
         if host == None:
-            ErrorWindow("Erreur hote", "Veuillez indiquer l'hote dans les parametres de connexion")
+            ErrorWindow("Erreur hote", "Veuillez indiquer l'hote dans les parametres de connexion","critical")
+            return
         if port == None:
-            ErrorWindow("Erreur port", "Veuillez indiquer le port dans les parametres de connexion")
+            ErrorWindow("Erreur port", "Veuillez indiquer le port dans les parametres de connexion","critical")
+            return
         if username == None:
-            ErrorWindow("Erreur username", "Veuillez indiquer le nom d'utilisation dans les parametres de connexion")
+            ErrorWindow("Erreur username", "Veuillez indiquer le nom d'utilisation dans les parametres de connexion","critical")
+            return
         if password == None:
-            ErrorWindow("Erreur password", "Veuillez indiquer le mot de passe dans les parametres de connexion")
+            ErrorWindow("Erreur password", "Veuillez indiquer le mot de passe dans les parametres de connexion","critical")
+            return
         if database == None:
-            ErrorWindow("Erreur database", "Veuillez indiquer la base de donnees dans les parametres de connexion")
+            ErrorWindow("Erreur database", "Veuillez indiquer la base de donnees dans les parametres de connexion","critical")
+            return
 
         # Set information for the layer URI
         self.uri.setConnection(host, port, database, username, password)
@@ -125,10 +130,10 @@ class Core:
         # Create a layer based on the information previously specified (database and column). The layer is
         # not yet added to the UI. The layer is a Postgres type
         layer = QgsVectorLayer(self.uri.uri(), layer_name, 'postgres')
+
         # Check if the Layer is valid or not (in case of the column/table/... does not exist
         if not layer.isValid():
-            print
-            'Layer [' + layer_name + '] failed to load!'
+            ErrorWindow("Erreur chargement", "Erreur au chargement de la bdd","warning")
             return
 
         # Save the layer into the layer list (reminder: the layer list is useful to refresh all layers when
@@ -168,6 +173,7 @@ class Core:
         for layer in QgsMapLayerRegistry.instance().mapLayers():
             if layer.find(layer_name) != -1:
                 QgsMapLayerRegistry.instance().removeMapLayer(layer)
+
 
     def stop(self):
         """
