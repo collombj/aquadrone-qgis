@@ -45,6 +45,7 @@ class ListenerWorker(QtCore.QObject):
                             # Emit a progress notification
                             # The progress notification is only used to trigger the refresh
                             self.progress.emit(0)
+                            print("received notification from dabatabase")
         except:
             pass
 
