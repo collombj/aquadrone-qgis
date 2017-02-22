@@ -44,11 +44,6 @@ class SIREN:
         self.database_connection = None  # Database list (will be initialized in @SIREN::init_database_selector()
         self.core = None  # Main class to manipulate Layers and Notifications
 
-        # To ensure layers are not displayed more than once
-        self.is_brut_displayed = False
-        self.is_corrected_displayed = False
-        self.is_difference_displayed = False
-
         # End of Edit part
 
         self.iface = iface
@@ -125,7 +120,7 @@ class SIREN:
 
         # Stop the Multi-threading (managed by the Main Class @Core
         if self.core is not None:
-            self.core.stop()
+            self.core.reset()
 
     def unload(self):
         for action in self.actions:
@@ -154,6 +149,8 @@ class SIREN:
             self.init_database_selector()
             # Associate method @SIREN.live_button to the button click (UI - Live)
             self.dockwidget.liveButton.clicked.connect(self.live_button)
+            # Associate method @SIREN.reset_button to the button click (UI - Live)
+            self.dockwidget.resetButton.clicked.connect(self.reset_button)
 
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
@@ -184,56 +181,124 @@ class SIREN:
         """
         Action triggered when the 'live' button is pressed
         """
-        # Get the current database selection (in the UI selector)
-        selected = self.dockwidget.databaseSelector.currentText()
-        if selected == "":
-            ErrorWindow("Erreur selection base de donnees", "Veillez selectionner une base de donnees avant de valider", "information")
-            return
+        self.dockwidget.liveButton.setEnabled(False)
 
-        # Construct the @Core class (Main Class)
-        # The Class need the global information of the database
-        # The Class need to manipulate layers so a reference to the interface (iface) is required
-        self.core = Core(
-            self.database_connection.value(selected + '/host'),
-            self.database_connection.value(selected + '/port'),
-            self.database_connection.value(selected + '/username'),
-            self.database_connection.value(selected + '/password'),
-            self.database_connection.value(selected + '/database'),
-            self.iface
-        )
-
+        # if no layer do nothing
         if not self.dockwidget.checkBoxCorrected.isChecked():
             if not self.dockwidget.checkBoxDifference.isChecked():
                 if not self.dockwidget.checkBoxBrut.isChecked():
-                    ErrorWindow("Erreur selection couche","Veillez selectionner une couche avant de continuer", "critical")
+                    ErrorWindow("Erreur selection couche", "Veillez selectionner une couche avant de continuer",
+                                "critical")
+                    #enable live_button
+                    self.dockwidget.liveButton.setEnabled(True)
                     return
+
+        # init core
+        if self.core is None:
+            # Get the current database selection (in the UI selector)
+            selected = self.dockwidget.databaseSelector.currentText()
+            if selected == "":
+                ErrorWindow("Erreur selection base de donnees",
+                            "Veillez selectionner une base de donnees avant de valider",
+                            "information")
+
+                # enable live_button
+                self.dockwidget.liveButton.setEnabled(True)
+                return
+
+            # Construct the @Core class (Main Class)
+            # The Class need the global information of the database
+            # The Class need to manipulate layers so a reference to the interface (iface) is required
+            self.core = Core(
+                self.database_connection.value(selected + '/host'),
+                self.database_connection.value(selected + '/port'),
+                self.database_connection.value(selected + '/username'),
+                self.database_connection.value(selected + '/password'),
+                self.database_connection.value(selected + '/database'),
+                self.iface
+            )
+
+        self.core.connect_init()
+
+        self.update_layer_list()
+        print("live -> stop")
+        # unbind live event
+        self.dockwidget.liveButton.clicked.disconnect(self.live_button)
+        # change text
+        self.dockwidget.liveButton.setText("Stop")
+        # bind stop event
+        self.dockwidget.liveButton.clicked.connect(self.stop_button)
+        # enable liveButton
+        self.dockwidget.liveButton.setEnabled(True)
+        # disable resetButton
+        self.dockwidget.resetButton.setEnabled(False)
+
+    def stop_button(self):
+        """
+        Stop listening
+        :return:
+        """
+        # set inactive
+        self.dockwidget.liveButton.setEnabled(False)
+        print("stop -> live")
+        self.core.stop()
+        # change text
+        self.dockwidget.liveButton.setText("Live")
+
+        # unbind stop event
+        self.dockwidget.liveButton.clicked.disconnect(self.stop_button)
+        # bind live event
+        self.dockwidget.liveButton.clicked.connect(self.live_button)
+        # setactive
+        self.dockwidget.liveButton.setEnabled(True)
+        # enable resetButton
+        self.dockwidget.resetButton.setEnabled(True)
+
+    def reset_button(self):
+        """
+        Reset stuff
+        """
+        self.dockwidget.liveButton.setEnabled(False)
+        print("reset")
+        # remove all the layers we added
+        self.core.reset()
+        self.uncheck_checkboxes()
+        # destroys core
+        self.core = None
+        #enable liveButton
+        self.dockwidget.liveButton.setEnabled(True)
+        # disable resetButton
+        self.dockwidget.resetButton.setEnabled(False)
+
+    def update_layer_list(self):
+        """
+        TODO
+        :return:
+        """
+        # If the 'Brut Position' checkbox is checked add the associated layer to the current project
+        if self.dockwidget.checkBoxBrut.isChecked():
+            self.core.brut_layer()
+        else:
+            self.core.remove_brut_layer()
 
         # If the 'Corrected Position' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxCorrected.isChecked():
-            if not self.is_corrected_displayed :
-                self.is_corrected_displayed = True
-                self.core.corrected_layer()
+            self.core.corrected_layer()
         else:
-            self.is_corrected_displayed = False
             self.core.remove_corrected_layer()
-
 
         # If the 'Difference Area' checkbox is checked add the associated layer to the current project
         if self.dockwidget.checkBoxDifference.isChecked():
-            if not self.is_difference_displayed :
-                self.is_difference_displayed = True
-                self.core.difference_layer()
+            self.core.difference_layer()
         else:
-            self.is_difference_displayed = False
             self.core.remove_difference_layer()
 
 
-        # If the 'Brut Position' checkbox is checked add the associated layer to the current project
-        if self.dockwidget.checkBoxBrut.isChecked():
-            if not self.is_brut_displayed:
-                self.is_brut_displayed = True
-                self.core.brut_layer()
-        else:
-            self.is_brut_displayed = False
-            self.core.remove_brut_layer()
-
+    def uncheck_checkboxes(self):
+        """
+        TODO
+        :return:
+        """
+        self.dockwidget.checkBoxBrut.setChecked(False)
+        self.dockwidget.checkBoxCorrected.setChecked(False)
+        self.dockwidget.checkBoxDifference.setChecked(False)
